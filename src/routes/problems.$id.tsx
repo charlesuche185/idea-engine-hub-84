@@ -39,7 +39,7 @@ function ProblemPage() {
 
   const analyze = async () => {
     if (!p) return;
-    if (!user) return toast("Sign in to analyze problems with AI.");
+    if (!user) { toast("Sign in to analyze problems with AI."); return; }
     setBusy(true);
     try {
       const full = await streamText("/api/solve", { problem: p.description, category: p.category }, setAnalysis);

@@ -33,7 +33,7 @@ function SolvePage() {
   const ctrl = useRef<AbortController | null>(null);
 
   const analyze = async () => {
-    if (problem.trim().length < 5) return toast("Please describe the problem in a bit more detail.");
+    if (problem.trim().length < 5) { toast("Please describe the problem in a bit more detail."); return; }
     setBusy(true);
     setSaved(false);
     setResult("");
@@ -53,7 +53,7 @@ function SolvePage() {
       .insert({ title: problem.slice(0, 90), description: problem, category, analysis: result })
       .select("id")
       .single();
-    if (error || !data) return toast.error("Couldn't save. Please try again.");
+    if (error || !data) { toast.error("Couldn't save. Please try again."); return; }
     const summary = extractSection(result, "Recommended Project Direction")?.slice(0, 400) ?? "";
     const { data: idea } = await supabase
       .from("ideas")

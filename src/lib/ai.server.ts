@@ -47,7 +47,7 @@ export async function requireUser(request: Request) {
   return data.user;
 }
 
-export type InMessage = { role: "user" | "assistant"; content: string; image?: string | null };
+export type InMessage = { role: "user" | "assistant"; content: string; image?: string | null | undefined };
 
 export function toModelMessages(msgs: InMessage[]): ModelMessage[] {
   return msgs.slice(-30).map((m) => {

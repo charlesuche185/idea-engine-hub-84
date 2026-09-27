@@ -27,7 +27,7 @@ export async function streamText(
       method: "POST",
       headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(body),
-      signal,
+      signal: signal ?? null,
     });
   } catch (e) {
     if ((e as Error).name === "AbortError") throw e;

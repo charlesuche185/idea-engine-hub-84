@@ -85,7 +85,7 @@ export function Composer({
     rec.onresult = (e) => {
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
+        const r = e.results[i]!;
         if (r.isFinal) finalRef.current += r[0].transcript + " ";
         else interim += r[0].transcript;
       }

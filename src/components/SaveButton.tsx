@@ -22,13 +22,13 @@ export function SaveButton({ type, id, className }: { type: "problem" | "idea"; 
   const toggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) return toast("Sign in to save items to your profile.");
+    if (!user) { toast("Sign in to save items to your profile."); return; }
     if (saved) {
       await supabase.from("saved_items").delete().eq("item_type", type).eq("item_id", id);
       setSaved(false);
     } else {
       const { error } = await supabase.from("saved_items").insert({ item_type: type, item_id: id });
-      if (error) return toast.error("Couldn't save. Please try again.");
+      if (error) { toast.error("Couldn't save. Please try again."); return; }
       setSaved(true);
       toast.success("Saved to your profile");
     }

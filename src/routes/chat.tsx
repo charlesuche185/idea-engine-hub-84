@@ -25,7 +25,7 @@ export const Route = createFileRoute("/chat")({
   component: ChatPage,
 });
 
-type Msg = { id?: string; role: "user" | "assistant"; content: string; image_url?: string | null; error?: boolean };
+type Msg = { id?: string | undefined; role: "user" | "assistant"; content: string; image_url?: string | null; error?: boolean };
 type Conv = { id: string; title: string; updated_at: string };
 
 const SUGGESTIONS = [
@@ -60,7 +60,7 @@ function ChatPage() {
     if (!user) return;
     if (c === convRef.current && msgs.length) return;
     convRef.current = c;
-    if (!c) return setMsgs([]);
+    if (!c) { setMsgs([]); return; }
     supabase
       .from("messages")
       .select("id,role,content,image_url")
@@ -119,7 +119,7 @@ function ChatPage() {
     if (!cid) {
       const title = (text || "Image question").slice(0, 60);
       const { data, error } = await supabase.from("conversations").insert({ title }).select("id").single();
-      if (error || !data) return toast.error("Couldn't start a conversation. Please try again.");
+      if (error || !data) { toast.error("Couldn't start a conversation. Please try again."); return; }
       cid = data.id;
       convRef.current = cid;
       nav({ search: { c: cid }, replace: true });
