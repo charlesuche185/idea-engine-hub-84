@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChatRouteImport } from './routes/chat'
+import { Route as IdeasRouteImport } from './routes/ideas'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SolveRouteImport } from './routes/solve'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiSolveRouteImport } from './routes/api/solve'
+import { Route as ProblemsIndexRouteImport } from './routes/problems.index'
+import { Route as ProblemsIdRouteImport } from './routes/problems.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IdeasRoute = IdeasRouteImport.update({
+  id: '/ideas',
+  path: '/ideas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolveRoute = SolveRouteImport.update({
+  id: '/solve',
+  path: '/solve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSolveRoute = ApiSolveRouteImport.update({
+  id: '/api/solve',
+  path: '/api/solve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProblemsIndexRoute = ProblemsIndexRouteImport.update({
+  id: '/problems/',
+  path: '/problems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProblemsIdRoute = ProblemsIdRouteImport.update({
+  id: '/problems/$id',
+  path: '/problems/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/ideas': typeof IdeasRoute
+  '/profile': typeof ProfileRoute
+  '/solve': typeof SolveRoute
+  '/api/chat': typeof ApiChatRoute
+  '/api/solve': typeof ApiSolveRoute
+  '/problems/$id': typeof ProblemsIdRoute
+  '/problems/': typeof ProblemsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/ideas': typeof IdeasRoute
+  '/profile': typeof ProfileRoute
+  '/solve': typeof SolveRoute
+  '/api/chat': typeof ApiChatRoute
+  '/api/solve': typeof ApiSolveRoute
+  '/problems/$id': typeof ProblemsIdRoute
+  '/problems': typeof ProblemsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/chat': typeof ChatRoute
+  '/ideas': typeof IdeasRoute
+  '/profile': typeof ProfileRoute
+  '/solve': typeof SolveRoute
+  '/api/chat': typeof ApiChatRoute
+  '/api/solve': typeof ApiSolveRoute
+  '/problems/$id': typeof ProblemsIdRoute
+  '/problems/': typeof ProblemsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/ideas'
+    | '/profile'
+    | '/solve'
+    | '/api/chat'
+    | '/api/solve'
+    | '/problems/$id'
+    | '/problems/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/ideas'
+    | '/profile'
+    | '/solve'
+    | '/api/chat'
+    | '/api/solve'
+    | '/problems/$id'
+    | '/problems'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/ideas'
+    | '/profile'
+    | '/solve'
+    | '/api/chat'
+    | '/api/solve'
+    | '/problems/$id'
+    | '/problems/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  ChatRoute: typeof ChatRoute
+  IdeasRoute: typeof IdeasRoute
+  ProfileRoute: typeof ProfileRoute
+  SolveRoute: typeof SolveRoute
+  ApiChatRoute: typeof ApiChatRoute
+  ApiSolveRoute: typeof ApiSolveRoute
+  ProblemsIdRoute: typeof ProblemsIdRoute
+  ProblemsIndexRoute: typeof ProblemsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ideas': {
+      id: '/ideas'
+      path: '/ideas'
+      fullPath: '/ideas'
+      preLoaderRoute: typeof IdeasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solve': {
+      id: '/solve'
+      path: '/solve'
+      fullPath: '/solve'
+      preLoaderRoute: typeof SolveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/solve': {
+      id: '/api/solve'
+      path: '/api/solve'
+      fullPath: '/api/solve'
+      preLoaderRoute: typeof ApiSolveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/problems/': {
+      id: '/problems/'
+      path: '/problems'
+      fullPath: '/problems/'
+      preLoaderRoute: typeof ProblemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/problems/$id': {
+      id: '/problems/$id'
+      path: '/problems/$id'
+      fullPath: '/problems/$id'
+      preLoaderRoute: typeof ProblemsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  ChatRoute: ChatRoute,
+  IdeasRoute: IdeasRoute,
+  ProfileRoute: ProfileRoute,
+  SolveRoute: SolveRoute,
+  ApiChatRoute: ApiChatRoute,
+  ApiSolveRoute: ApiSolveRoute,
+  ProblemsIdRoute: ProblemsIdRoute,
+  ProblemsIndexRoute: ProblemsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
