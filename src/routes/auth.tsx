@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PasswordInput } from "@/components/PasswordInput";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,9 +71,16 @@ function AuthPage() {
               <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
             </div>
             <form onSubmit={submit} className="space-y-3">
-              <Input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
-              <Input type="password" required minLength={6} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-11" />
-              <Button disabled={busy} className="h-11 w-full bg-signal text-signal-foreground hover:bg-signal/90">
+              <Input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12" />
+              <PasswordInput required minLength={6} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              {mode === "in" && (
+                <div className="text-right">
+                  <Link to="/forgot-password" className="inline-block py-1 text-sm font-medium text-signal">
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
+              <Button disabled={busy} className="h-12 w-full bg-signal text-signal-foreground hover:bg-signal/90">
                 {mode === "in" ? "Sign in" : "Sign up"}
               </Button>
             </form>
