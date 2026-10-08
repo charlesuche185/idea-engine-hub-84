@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as IdeasRouteImport } from './routes/ideas'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SolveRouteImport } from './routes/solve'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSolveRouteImport } from './routes/api/solve'
@@ -35,6 +37,11 @@ const ChatRoute = ChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IdeasRoute = IdeasRouteImport.update({
   id: '/ideas',
   path: '/ideas',
@@ -43,6 +50,11 @@ const IdeasRoute = IdeasRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SolveRoute = SolveRouteImport.update({
@@ -75,8 +87,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -87,8 +101,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -100,8 +116,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -114,8 +132,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/chat'
+    | '/forgot-password'
     | '/ideas'
     | '/profile'
+    | '/reset-password'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -126,8 +146,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/chat'
+    | '/forgot-password'
     | '/ideas'
     | '/profile'
+    | '/reset-password'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -138,8 +160,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/chat'
+    | '/forgot-password'
     | '/ideas'
     | '/profile'
+    | '/reset-password'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -151,8 +175,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   IdeasRoute: typeof IdeasRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SolveRoute: typeof SolveRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSolveRoute: typeof ApiSolveRoute
@@ -183,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ideas': {
       id: '/ideas'
       path: '/ideas'
@@ -195,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/solve': {
@@ -239,8 +279,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   IdeasRoute: IdeasRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SolveRoute: SolveRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSolveRoute: ApiSolveRoute,
