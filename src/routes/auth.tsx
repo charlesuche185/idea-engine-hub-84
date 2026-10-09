@@ -31,7 +31,7 @@ function AuthPage() {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (user) nav({ to: "/profile" });
+    if (user) nav({ to: "/chat", replace: true });
   }, [user, nav]);
 
   const submit = async (e: React.FormEvent) => {
@@ -49,7 +49,7 @@ function AuthPage() {
   };
 
   const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/auth` });
     if (r.error) toast.error("Google sign-in didn't complete. Please try again.");
   };
 
