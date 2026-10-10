@@ -37,9 +37,9 @@ type Msg = { id?: string | undefined; role: "user" | "assistant"; content: strin
 type Conv = { id: string; title: string; updated_at: string };
 
 const SUGGESTIONS = [
-  "Explain photosynthesis simply",
-  "Give me 5 startup ideas for my town",
-  "Plan a science fair project on clean water",
+  "Our community has no clean drinking water. What can I do?",
+  "Give me 5 startup ideas to solve problems in my town",
+  "Plan a school project on reducing plastic waste",
 ];
 
 function makeTitle(text: string) {

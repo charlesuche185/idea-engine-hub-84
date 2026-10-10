@@ -40,7 +40,7 @@ function Home() {
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Button asChild size="lg" className="h-12 bg-signal text-base text-signal-foreground hover:bg-signal/90">
-            <Link to="/solve">
+            <Link to="/chat">
               Solve a Problem <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
