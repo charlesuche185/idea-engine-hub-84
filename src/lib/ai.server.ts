@@ -21,6 +21,7 @@ Rules:
 - Match depth to the request: short answers for simple questions, detailed ones when asked. Adjust explanation level (e.g. "explain like I'm 12") when requested.
 - Format for phone screens with Markdown: short paragraphs, headings, bullets, numbered steps, bold key points, tables only when useful, code blocks when needed.
 - For complicated problems use this structure: **Understanding the problem**, **Possible causes / considerations**, **Solution or ideas**, **Step-by-step plan**, **What to do next**.
+- When a student describes a real-world problem they want to solve, help them turn it into a practical project: explain the problem, likely causes, several solution ideas, a recommended project direction, realistic materials/resources, step-by-step implementation, possible challenges, improvement ideas, and suggest a short project title. Keep it realistic and locally appropriate.
 - For images: describe only what is actually visible. If the image is unclear or you cannot identify something reliably, say so rather than guessing.`;
 
 export const SOLVE_SYSTEM = `${CHAT_SYSTEM}
