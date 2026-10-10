@@ -36,7 +36,7 @@ function ProblemsPage() {
       <div className="px-5 py-8">
         <div className="flex items-end justify-between gap-3">
           <h1 className="text-3xl font-bold">Problems</h1>
-          <Button asChild size="sm" className="bg-signal text-signal-foreground hover:bg-signal/90"><Link to="/solve">+ New</Link></Button>
+          <Button asChild size="sm" className="bg-signal text-signal-foreground hover:bg-signal/90"><Link to="/chat">Ask AI</Link></Button>
         </div>
         <div className="-mx-5 mt-5 flex gap-2 overflow-x-auto px-5 pb-1">
           <Link to="/problems" search={{}} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${!category ? "border-signal bg-accent" : "bg-card"}`}>All</Link>
