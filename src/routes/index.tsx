@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Compass, Hammer, MessageSquare, PenLine } from "lucide-react";
+import { Compass, Hammer, MessageSquare, PenLine } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/constants";
@@ -39,11 +39,6 @@ function Home() {
           Describe a real problem. Solve X helps you understand it, explore ideas, and turn your thinking into a practical project.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button asChild size="lg" className="h-12 bg-signal text-base text-signal-foreground hover:bg-signal/90">
-            <Link to="/chat">
-              Solve a Problem <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
           <Button asChild size="lg" variant="outline" className="h-12 text-base">
             <Link to="/chat">
               <MessageSquare className="mr-1 h-4 w-4" /> Ask AI
