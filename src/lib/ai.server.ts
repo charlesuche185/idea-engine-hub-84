@@ -80,7 +80,7 @@ export function toModelMessages(msgs: InMessage[]): ModelMessage[] {
   });
 }
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-3.5-flash";
 
 type GPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
