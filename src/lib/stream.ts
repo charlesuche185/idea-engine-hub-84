@@ -6,8 +6,9 @@ export const AI_ERROR = "Something went wrong while connecting to the AI. Please
 export class AIError extends Error {}
 
 function friendly(status?: number) {
-  if (status === 429) return "Solve X is busy right now. Please wait a moment and try again.";
+  if (status === 429) return "Solve X has reached its free AI limit for now. Please wait a few minutes and try again (the daily limit resets every day).";
   if (status === 402) return "The AI service has reached its usage limit. Please try again later.";
+  if (status === 400 || status === 403) return "Solve X couldn't reach the AI right now. Please try again later.";
   if (status === 401) return "Please sign in again to use the AI.";
   return AI_ERROR;
 }
