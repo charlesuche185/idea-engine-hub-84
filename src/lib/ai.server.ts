@@ -80,7 +80,90 @@ export function toModelMessages(msgs: InMessage[]): ModelMessage[] {
   });
 }
 
+const GEMINI_MODEL = "gemini-2.5-flash";
+
+type GPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+
+function toGeminiContents(messages: ModelMessage[]) {
+  return messages.map((m) => {
+    const parts: GPart[] = [];
+    if (typeof m.content === "string") parts.push({ text: m.content || " " });
+    else
+      for (const p of m.content as Array<{ type: string; text?: string; image?: unknown }>) {
+        if (p.type === "text") parts.push({ text: p.text || " " });
+        else if (p.type === "image" && typeof p.image === "string") {
+          const match = /^data:(image\/[\w.+-]+);base64,(.+)$/.exec(p.image);
+          if (match) parts.push({ inlineData: { mimeType: match[1]!, data: match[2]! } });
+        }
+      }
+    return { role: m.role === "assistant" ? "model" : "user", parts };
+  });
+}
+
+function streamGemini(request: Request, apiKey: string, system: string, messages: ModelMessage[]): Response {
+  const enc = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: system }] },
+              contents: toGeminiContents(messages),
+            }),
+            signal: request.signal,
+          },
+        );
+        if (!res.ok || !res.body) {
+          console.error(`Gemini request failed [${res.status}]: ${await res.text()}`);
+          // Gemini signals exhausted free quota with 429.
+          controller.enqueue(enc.encode(`${ERROR_SENTINEL}${res.status}`));
+          return;
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "";
+        let sent = false;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let nl: number;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            const line = buf.slice(0, nl).trim();
+            buf = buf.slice(nl + 1);
+            if (!line.startsWith("data:")) continue;
+            try {
+              const j = JSON.parse(line.slice(5));
+              const text = (j.candidates?.[0]?.content?.parts ?? [])
+                .map((p: { text?: string; thought?: boolean }) => (p.thought ? "" : p.text ?? ""))
+                .join("");
+              if (text) { controller.enqueue(enc.encode(text)); sent = true; }
+            } catch { /* partial line */ }
+          }
+        }
+        if (!sent) controller.enqueue(enc.encode(ERROR_SENTINEL));
+      } catch (e) {
+        if (!request.signal.aborted) {
+          console.error("Gemini error", e);
+          controller.enqueue(enc.encode(ERROR_SENTINEL));
+        }
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(body, {
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache, no-transform" },
+  });
+}
+
 export function streamAI(request: Request, system: string, messages: ModelMessage[]): Response {
+  const geminiKey = process.env["GEMINI_API_KEY"];
+  if (geminiKey) return streamGemini(request, geminiKey, system, messages);
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) return new Response("AI not configured", { status: 500 });
   let runId: string | undefined;
