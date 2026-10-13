@@ -127,7 +127,12 @@ function ChatPage() {
         });
       } else {
         const message = e instanceof AIError ? e.message : AI_ERROR;
-        setMsgs([...history, { role: "assistant", content: message, error: true }]);
+        const partial = e instanceof AIError ? e.partial.trim() : "";
+        // Keep any partial text visible, but never save it as a finished answer.
+        setMsgs([
+          ...history,
+          { role: "assistant", content: partial ? `${partial}\n\n---\n\n⚠️ ${message}` : message, error: true },
+        ]);
         setBusy(false);
         return;
       }

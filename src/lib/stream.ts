@@ -42,17 +42,29 @@ export async function streamText(
   const reader = res.body.getReader();
   const dec = new TextDecoder();
   let full = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    full += dec.decode(value, { stream: true });
-    const i = full.indexOf(SENTINEL);
-    if (i >= 0) {
-      const status = Number(full.slice(i + SENTINEL.length)) || undefined;
-      onText(full.slice(0, i));
-      throw new AIError(friendly(status));
+  const fail = (text: string, status?: number) => {
+    const err = new AIError(friendly(status));
+    err.partial = text;
+    return err;
+  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      full += dec.decode(value, { stream: true });
+      const i = full.indexOf(SENTINEL);
+      onText(i >= 0 ? full.slice(0, i) : full);
     }
-    onText(full);
+  } catch (e) {
+    if ((e as Error).name === "AbortError") throw e;
+    // Connection dropped mid-answer.
+    throw fail(full.split(SENTINEL)[0] ?? "", 1);
+  }
+  full += dec.decode();
+  const i = full.indexOf(SENTINEL);
+  if (i >= 0) {
+    const status = Number(full.slice(i + SENTINEL.length)) || undefined;
+    throw fail(full.slice(0, i), status);
   }
   if (!full.trim()) throw new AIError(AI_ERROR);
   return full;
