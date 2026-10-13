@@ -69,6 +69,7 @@ function ChatPage() {
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const qSent = useRef(false);
+  const createdRef = useRef<string | undefined>(undefined);
 
   const loadConvs = useCallback(async () => {
     const { data } = await supabase.from("conversations").select("id,title,updated_at").order("updated_at", { ascending: false }).limit(50);
@@ -83,6 +84,7 @@ function ChatPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (c && c === createdRef.current) { convRef.current = c; return; }
     if (c === convRef.current && msgs.length) return;
     convRef.current = c;
     stopSpeaking();
@@ -176,6 +178,7 @@ function ChatPage() {
       if (error || !data) { toast.error("Couldn't start a conversation. Please try again."); return; }
       cid = data.id;
       convRef.current = cid;
+      createdRef.current = cid;
       nav({ search: { c: cid }, replace: true });
       loadConvs();
     }
