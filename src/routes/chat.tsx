@@ -426,7 +426,7 @@ function AssistantMessage({
           </div>
         ) : m.error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
-            {m.content}
+            <Markdown>{m.content}</Markdown>
             {isLast && (
               <button onClick={onRegenerate} className="mt-2 flex h-9 items-center gap-1.5 rounded-lg bg-background px-3 font-medium">
                 <RotateCcw className="h-4 w-4" /> Try again
