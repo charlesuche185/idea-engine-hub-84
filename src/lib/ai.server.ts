@@ -81,6 +81,8 @@ export function toModelMessages(msgs: InMessage[]): ModelMessage[] {
 }
 
 const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_FALLBACK_MODEL = "gemini-flash-lite-latest";
+const INCOMPLETE_CODE = 1;
 
 type GPart = { text: string } | { inlineData: { mimeType: string; data: string } };
 
@@ -105,18 +107,23 @@ function streamGemini(request: Request, apiKey: string, system: string, messages
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`,
-          {
+        const call = (model: string) =>
+          fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: system }] },
               contents: toGeminiContents(messages),
+              generationConfig: { maxOutputTokens: 16384 },
             }),
             signal: request.signal,
-          },
-        );
+          });
+        let res = await call(GEMINI_MODEL);
+        // One bounded fallback when the main model is overloaded (free tier, no cost).
+        if (res.status >= 500) {
+          console.error(`Gemini ${GEMINI_MODEL} unavailable [${res.status}]: ${await res.text()}`);
+          res = await call(GEMINI_FALLBACK_MODEL);
+        }
         if (!res.ok || !res.body) {
           console.error(`Gemini request failed [${res.status}]: ${await res.text()}`);
           // Gemini signals exhausted free quota with 429.
@@ -127,25 +134,39 @@ function streamGemini(request: Request, apiKey: string, system: string, messages
         const dec = new TextDecoder();
         let buf = "";
         let sent = false;
+        let finish: string | undefined;
+        const handle = (raw: string) => {
+          const line = raw.trim();
+          if (!line.startsWith("data:")) return;
+          try {
+            const j = JSON.parse(line.slice(5));
+            const cand = j.candidates?.[0];
+            if (cand?.finishReason) finish = cand.finishReason;
+            const text = (cand?.content?.parts ?? [])
+              .map((p: { text?: string; thought?: boolean }) => (p.thought ? "" : p.text ?? ""))
+              .join("");
+            if (text) { controller.enqueue(enc.encode(text)); sent = true; }
+          } catch (e) {
+            console.error("Gemini parse error", e);
+          }
+        };
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           buf += dec.decode(value, { stream: true });
           let nl: number;
           while ((nl = buf.indexOf("\n")) >= 0) {
-            const line = buf.slice(0, nl).trim();
+            handle(buf.slice(0, nl));
             buf = buf.slice(nl + 1);
-            if (!line.startsWith("data:")) continue;
-            try {
-              const j = JSON.parse(line.slice(5));
-              const text = (j.candidates?.[0]?.content?.parts ?? [])
-                .map((p: { text?: string; thought?: boolean }) => (p.thought ? "" : p.text ?? ""))
-                .join("");
-              if (text) { controller.enqueue(enc.encode(text)); sent = true; }
-            } catch { /* partial line */ }
           }
         }
+        buf += dec.decode();
+        if (buf) handle(buf);
         if (!sent) controller.enqueue(enc.encode(ERROR_SENTINEL));
+        else if (finish !== "STOP") {
+          console.error("Gemini answer incomplete, finishReason:", finish);
+          controller.enqueue(enc.encode(`${ERROR_SENTINEL}${INCOMPLETE_CODE}`));
+        }
       } catch (e) {
         if (!request.signal.aborted) {
           console.error("Gemini error", e);

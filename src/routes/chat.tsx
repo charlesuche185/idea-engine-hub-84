@@ -69,6 +69,7 @@ function ChatPage() {
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const qSent = useRef(false);
+  const createdRef = useRef<string | undefined>(undefined);
 
   const loadConvs = useCallback(async () => {
     const { data } = await supabase.from("conversations").select("id,title,updated_at").order("updated_at", { ascending: false }).limit(50);
@@ -83,6 +84,7 @@ function ChatPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (c && c === createdRef.current) { convRef.current = c; return; }
     if (c === convRef.current && msgs.length) return;
     convRef.current = c;
     stopSpeaking();
@@ -127,7 +129,12 @@ function ChatPage() {
         });
       } else {
         const message = e instanceof AIError ? e.message : AI_ERROR;
-        setMsgs([...history, { role: "assistant", content: message, error: true }]);
+        const partial = e instanceof AIError ? e.partial.trim() : "";
+        // Keep any partial text visible, but never save it as a finished answer.
+        setMsgs([
+          ...history,
+          { role: "assistant", content: partial ? `${partial}\n\n---\n\n⚠️ ${message}` : message, error: true },
+        ]);
         setBusy(false);
         return;
       }
@@ -171,6 +178,7 @@ function ChatPage() {
       if (error || !data) { toast.error("Couldn't start a conversation. Please try again."); return; }
       cid = data.id;
       convRef.current = cid;
+      createdRef.current = cid;
       nav({ search: { c: cid }, replace: true });
       loadConvs();
     }
@@ -421,7 +429,7 @@ function AssistantMessage({
           </div>
         ) : m.error ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
-            {m.content}
+            <Markdown>{m.content}</Markdown>
             {isLast && (
               <button onClick={onRegenerate} className="mt-2 flex h-9 items-center gap-1.5 rounded-lg bg-background px-3 font-medium">
                 <RotateCcw className="h-4 w-4" /> Try again
