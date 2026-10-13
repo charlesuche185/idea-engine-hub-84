@@ -3,9 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 const SENTINEL = "\u0000[[SOLVEX_ERROR]]";
 export const AI_ERROR = "Something went wrong while connecting to the AI. Please try again.";
 
-export class AIError extends Error {}
+export class AIError extends Error {
+  partial = "";
+}
 
 function friendly(status?: number) {
+  if (status === 1) return "This answer was cut off before it finished. Tap Try again to get the full answer.";
+  if (status === 503 || status === 500) return "The AI is very busy right now. Please wait a moment and tap Try again.";
   if (status === 429) return "Solve X has reached its free AI limit for now. Please wait a few minutes and try again (the daily limit resets every day).";
   if (status === 402) return "The AI service has reached its usage limit. Please try again later.";
   if (status === 400 || status === 403) return "Solve X couldn't reach the AI right now. Please try again later.";
