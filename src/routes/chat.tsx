@@ -437,7 +437,7 @@ function AssistantMessage({
             )}
           </div>
         ) : (
-          <Markdown>{m.content}</Markdown>
+          <Markdown linkCards={!(busy && isLast)}>{m.content}</Markdown>
         )}
         {!thinking && !m.error && !(busy && isLast) && (
           <div className="-ml-2 mt-1 flex text-muted-foreground">
