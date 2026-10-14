@@ -75,6 +75,7 @@ function LinkCard({ url }: { url: string }) {
 export function Markdown({ children, linkCards = false }: { children: string; linkCards?: boolean }) {
   const links = linkCards ? extractLinks(children) : [];
   return (
+    <>
     <div className="md">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
@@ -93,13 +94,14 @@ export function Markdown({ children, linkCards = false }: { children: string; li
       >
         {children}
       </ReactMarkdown>
+    </div>
       {links.length > 0 && (
-        <div className="!mt-4 space-y-2" aria-label="Links in this answer">
+        <div className="mt-4 space-y-2" aria-label="Links in this answer">
           {links.map((u) => (
             <LinkCard key={u} url={u} />
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }
