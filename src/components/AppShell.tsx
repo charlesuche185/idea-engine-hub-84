@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Lightbulb, ListChecks, MessageSquare, User } from "lucide-react";
+import { Bookmark, Home, Lightbulb, ListChecks, MessageSquare, User } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/problems", label: "Problems", icon: ListChecks },
   { to: "/chat", label: "Ask AI", icon: MessageSquare },
   { to: "/ideas", label: "Ideas", icon: Lightbulb },
+  { to: "/saved-solutions", label: "Saved", icon: Bookmark },
   { to: "/profile", label: "Profile", icon: User },
 ] as const;
 
@@ -22,7 +23,13 @@ export function Logo() {
   );
 }
 
-export function AppShell({ children, hideNavOnMobile }: { children: ReactNode; hideNavOnMobile?: boolean }) {
+export function AppShell({
+  children,
+  hideNavOnMobile,
+}: {
+  children: ReactNode;
+  hideNavOnMobile?: boolean;
+}) {
   const { pathname } = useLocation();
   const active = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
   return (
@@ -46,10 +53,12 @@ export function AppShell({ children, hideNavOnMobile }: { children: ReactNode; h
           </nav>
         </div>
       </header>
-      <main className={cn("mx-auto max-w-5xl", !hideNavOnMobile && "pb-24 md:pb-10")}>{children}</main>
+      <main className={cn("mx-auto max-w-5xl", !hideNavOnMobile && "pb-24 md:pb-10")}>
+        {children}
+      </main>
       {!hideNavOnMobile && (
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-          <div className="grid grid-cols-5">
+          <div className="grid grid-cols-6">
             {NAV.map((n) => (
               <Link
                 key={n.to}

@@ -198,6 +198,33 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_solutions: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          source_message_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          source_message_id: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          source_message_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

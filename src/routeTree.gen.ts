@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as IdeasRouteImport } from './routes/ideas'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SavedSolutionsRouteImport } from './routes/saved-solutions'
 import { Route as SolveRouteImport } from './routes/solve'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiSolveRouteImport } from './routes/api/solve'
@@ -57,6 +58,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavedSolutionsRoute = SavedSolutionsRouteImport.update({
+  id: '/saved-solutions',
+  path: '/saved-solutions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SolveRoute = SolveRouteImport.update({
   id: '/solve',
   path: '/solve',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved-solutions': typeof SavedSolutionsRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved-solutions': typeof SavedSolutionsRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/ideas': typeof IdeasRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved-solutions': typeof SavedSolutionsRoute
   '/solve': typeof SolveRoute
   '/api/chat': typeof ApiChatRoute
   '/api/solve': typeof ApiSolveRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/ideas'
     | '/profile'
     | '/reset-password'
+    | '/saved-solutions'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/ideas'
     | '/profile'
     | '/reset-password'
+    | '/saved-solutions'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/ideas'
     | '/profile'
     | '/reset-password'
+    | '/saved-solutions'
     | '/solve'
     | '/api/chat'
     | '/api/solve'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   IdeasRoute: typeof IdeasRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SavedSolutionsRoute: typeof SavedSolutionsRoute
   SolveRoute: typeof SolveRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSolveRoute: typeof ApiSolveRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saved-solutions': {
+      id: '/saved-solutions'
+      path: '/saved-solutions'
+      fullPath: '/saved-solutions'
+      preLoaderRoute: typeof SavedSolutionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/solve': {
       id: '/solve'
       path: '/solve'
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   IdeasRoute: IdeasRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SavedSolutionsRoute: SavedSolutionsRoute,
   SolveRoute: SolveRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSolveRoute: ApiSolveRoute,

@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Copy, History, MoreHorizontal, Pencil, Plus, RotateCcw, Share2, Square, Trash2, Volume2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, Check, Copy, History, MoreHorizontal, Pencil, Plus, RotateCcw, Share2, Square, Trash2, Volume2 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -54,6 +54,13 @@ function when(d: string) {
   return isToday(date) ? format(date, "h:mm a") : format(date, "d MMM");
 }
 
+function promptForAnswer(messages: Msg[], index: number) {
+  for (let i = index - 1; i >= 0; i -= 1) {
+    if (messages[i]?.role === "user") return makeTitle(messages[i]?.content ?? "");
+  }
+  return "Saved answer";
+}
+
 function ChatPage() {
   const { user, loading } = useAuth();
   const { c, q } = Route.useSearch();
@@ -65,6 +72,9 @@ function ChatPage() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [prefill, setPrefill] = useState<{ text: string; n: number } | null>(null);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+  const [savedByMessage, setSavedByMessage] = useState<Record<string, string>>({});
+  const [savingMessageIds, setSavingMessageIds] = useState<string[]>([]);
+  const savingMessageIdsRef = useRef(new Set<string>());
   const convRef = useRef<string | undefined>(c);
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -96,9 +106,28 @@ function ChatPage() {
       .select("id,role,content,image_url")
       .eq("conversation_id", c)
       .order("created_at")
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (error) toast.error("Couldn't load this chat. Please try again.");
-        setMsgs((data ?? []) as Msg[]);
+        const loadedMessages = (data ?? []) as Msg[];
+        setMsgs(loadedMessages);
+        if (error) return;
+        const assistantIds = loadedMessages
+          .filter((message) => message.role === "assistant" && message.id)
+          .map((message) => message.id as string);
+        if (assistantIds.length === 0) {
+          setSavedByMessage({});
+          return;
+        }
+        const { data: savedRows, error: savedError } = await supabase
+          .from("saved_solutions")
+          .select("id,source_message_id")
+          .in("source_message_id", assistantIds);
+        if (convRef.current !== c) return;
+        if (savedError) {
+          toast.error("Couldn't check which answers are saved.");
+          return;
+        }
+        setSavedByMessage(Object.fromEntries((savedRows ?? []).map((row) => [row.source_message_id, row.id])));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c, user]);
@@ -147,7 +176,8 @@ function ChatPage() {
         .select("id")
         .single();
       if (error) toast.error("Couldn't save the answer. Please check your connection.");
-      setMsgs((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, id: data?.id } : x)));
+      const messageId = data?.id ?? crypto.randomUUID();
+      setMsgs((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, id: messageId } : x)));
       await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convRef.current);
       loadConvs();
     }
@@ -253,6 +283,49 @@ function ChatPage() {
     else setSpeakingIdx(i);
   };
 
+  const toggleSaved = async (message: Msg, title: string) => {
+    if (!user || !message.id || savingMessageIdsRef.current.has(message.id)) return;
+    const messageId = message.id;
+    savingMessageIdsRef.current.add(messageId);
+    setSavingMessageIds((current) => [...current, messageId]);
+    try {
+      const savedId = savedByMessage[messageId];
+      if (savedId) {
+        const { error } = await supabase.from("saved_solutions").delete().eq("id", savedId);
+        if (error) {
+          toast.error("Couldn't remove this answer from your saved solutions.");
+          return;
+        }
+        setSavedByMessage((current) => {
+          const next = { ...current };
+          delete next[messageId];
+          return next;
+        });
+        toast.success("Removed from saved solutions");
+      } else {
+        const { data, error } = await supabase
+          .from("saved_solutions")
+          .insert({
+            user_id: user.id,
+            source_message_id: messageId,
+            title,
+            answer: message.content,
+          })
+          .select("id")
+          .single();
+        if (error || !data) {
+          toast.error("Couldn't save this answer. Please try again.");
+          return;
+        }
+        setSavedByMessage((current) => ({ ...current, [messageId]: data.id }));
+        toast.success("Answer saved to your solutions");
+      }
+    } finally {
+      savingMessageIdsRef.current.delete(messageId);
+      setSavingMessageIds((current) => current.filter((id) => id !== messageId));
+    }
+  };
+
   const share = async (i: number) => {
     const content = msgs[i]?.content ?? "";
     const text = `${toSpeakable(content).length > 0 ? content : ""}\n\n— Shared from Solve X`;
@@ -278,6 +351,14 @@ function ChatPage() {
           <span className="hidden text-sm font-semibold md:block">Solve X Assistant</span>
           {user && (
             <div className="flex gap-1">
+              <Link
+                to="/saved-solutions"
+                aria-label="Saved solutions"
+                title="Saved solutions"
+                className="grid h-10 w-10 place-items-center rounded-lg hover:bg-secondary md:hidden"
+              >
+                <Bookmark className="h-4 w-4" />
+              </Link>
               <button onClick={() => setHistOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg px-3 text-sm hover:bg-secondary">
                 <History className="h-4 w-4" /> History
               </button>
@@ -320,6 +401,10 @@ function ChatPage() {
                     onSpeak={() => toggleSpeak(i)}
                     onShare={() => share(i)}
                     onRegenerate={regenerate}
+                    promptTitle={promptForAnswer(msgs, i)}
+                    isSaved={Boolean(m.id && savedByMessage[m.id])}
+                    saving={Boolean(m.id && savingMessageIds.includes(m.id))}
+                    onToggleSaved={() => void toggleSaved(m, promptForAnswer(msgs, i))}
                   />
                 ),
               )}
@@ -411,8 +496,20 @@ function UserMessage({ m, editing, disabled, onEdit, onDelete }: { m: Msg; editi
 }
 
 function AssistantMessage({
-  m, isLast, busy, speaking, onSpeak, onShare, onRegenerate,
-}: { m: Msg; isLast: boolean; busy: boolean; speaking: boolean; onSpeak: () => void; onShare: () => void; onRegenerate: () => void }) {
+  m, isLast, busy, speaking, onSpeak, onShare, onRegenerate, promptTitle, isSaved, saving, onToggleSaved,
+}: {
+  m: Msg;
+  isLast: boolean;
+  busy: boolean;
+  speaking: boolean;
+  onSpeak: () => void;
+  onShare: () => void;
+  onRegenerate: () => void;
+  promptTitle: string;
+  isSaved: boolean;
+  saving: boolean;
+  onToggleSaved: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const thinking = !m.content && busy && isLast;
   const btn = "grid h-9 w-9 place-items-center rounded-md hover:bg-secondary hover:text-foreground";
@@ -441,6 +538,18 @@ function AssistantMessage({
         )}
         {!thinking && !m.error && !(busy && isLast) && (
           <div className="-ml-2 mt-1 flex text-muted-foreground">
+            {m.id && (
+              <button
+                onClick={onToggleSaved}
+                aria-label={isSaved ? "Remove saved solution" : "Save solution"}
+                title={isSaved ? "Saved to your solutions" : `Save answer for: ${promptTitle}`}
+                disabled={saving}
+                className={`flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60 ${isSaved ? "text-signal" : ""}`}
+              >
+                {isSaved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                {saving ? "Saving…" : isSaved ? "Saved" : "Save solution"}
+              </button>
+            )}
             <button
               onClick={() => { navigator.clipboard.writeText(m.content); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
               aria-label="Copy response"
