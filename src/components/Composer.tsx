@@ -108,8 +108,8 @@ export function Composer({
     setInterimText("");
     cancelledRef.current = false;
     rec.onresult = (e) => {
-      // Rebuild from the browser's full result list so revised interim guesses replace,
-      // rather than append to, the previous live words.
+      // Rebuild from finalized segments plus only the latest interim guess. Mobile
+      // browsers may return cumulative guesses at multiple result indices.
       const { text: nextDraft, interimText: nextInterim } = createVoiceDraft(baseRef.current, e.results);
       draftRef.current = nextDraft;
       interimRef.current = nextInterim;
