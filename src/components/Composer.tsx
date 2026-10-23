@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp, AudioLines, Mic, Plus, Square, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getRecognition, MIC_BLOCKED, type SR } from "@/lib/speech";
+import {
+  appendVoiceText,
+  createVoiceDraft,
+  finalizeVoiceDraft,
+  getRecognition,
+  MIC_BLOCKED,
+  type SR,
+} from "@/lib/speech";
 
 const OK_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 
@@ -49,12 +56,15 @@ export function Composer({
   const [text, setText] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
+  const [interimText, setInterimText] = useState("");
   const recRef = useRef<SR | null>(null);
   const baseRef = useRef("");
-  const finalRef = useRef("");
+  const draftRef = useRef("");
+  const interimRef = useRef("");
   const cancelledRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const displayText = listening ? appendVoiceText(text, interimText) : text;
 
   useEffect(() => {
     if (!prefill) return;
@@ -71,9 +81,16 @@ export function Composer({
     if (!ta) return;
     ta.style.height = "auto";
     ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
-  }, [text]);
+  }, [displayText]);
 
-  useEffect(() => () => recRef.current?.abort(), []);
+  useEffect(() => () => {
+    const rec = recRef.current;
+    if (rec) {
+      rec.onresult = null;
+      rec.onend = null;
+      rec.abort();
+    }
+  }, []);
 
   const startMic = () => {
     const Ctor = getRecognition();
@@ -85,17 +102,19 @@ export function Composer({
     rec.lang = navigator.language || "en-US";
     rec.continuous = true;
     rec.interimResults = true;
-    baseRef.current = text ? text.replace(/\s*$/, " ") : "";
-    finalRef.current = "";
+    baseRef.current = text;
+    draftRef.current = text;
+    interimRef.current = "";
+    setInterimText("");
     cancelledRef.current = false;
     rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i]!;
-        if (r.isFinal) finalRef.current += r[0].transcript + " ";
-        else interim += r[0].transcript;
-      }
-      setText(baseRef.current + finalRef.current + interim);
+      // Rebuild from the browser's full result list so revised interim guesses replace,
+      // rather than append to, the previous live words.
+      const { text: nextDraft, interimText: nextInterim } = createVoiceDraft(baseRef.current, e.results);
+      draftRef.current = nextDraft;
+      interimRef.current = nextInterim;
+      setText(nextDraft);
+      setInterimText(nextInterim);
     };
     rec.onerror = (e) => {
       if (e.error === "not-allowed" || e.error === "service-not-allowed") toast.error(MIC_BLOCKED, { duration: 8000 });
@@ -105,8 +124,11 @@ export function Composer({
     rec.onend = () => {
       setListening(false);
       recRef.current = null;
-      if (cancelledRef.current) setText(baseRef.current.trimEnd());
-      else setText((t) => t.replace(/\s+$/, ""));
+      const committed = finalizeVoiceDraft(baseRef.current, draftRef.current, interimRef.current, cancelledRef.current);
+      setText(committed);
+      draftRef.current = committed;
+      interimRef.current = "";
+      setInterimText("");
       taRef.current?.focus();
     };
     try {
@@ -143,7 +165,10 @@ export function Composer({
 
   const send = () => {
     if (busy) return;
-    if (listening) stopMic();
+    if (listening) {
+      stopMic();
+      return;
+    }
     const t = text.trim();
     if (!t && !image) return;
     onSend(t, image);
@@ -177,14 +202,23 @@ export function Composer({
         </div>
       )}
       {listening && (
-        <div className="mx-2 mb-1 flex items-center gap-2 text-xs font-medium text-signal">
+        <div role="status" aria-live="polite" className="mx-2 mb-1 flex items-center gap-2 text-xs font-medium text-signal">
           <span className="relative flex h-2.5 w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-signal" />
           </span>
           Listening… speak now
-          <button onClick={cancelMic} className="ml-auto rounded-md px-2 py-1.5 text-muted-foreground hover:bg-secondary">Cancel</button>
-          <button onClick={stopMic} className="rounded-md bg-secondary px-2 py-1.5 text-foreground">Done</button>
+          <button
+            onClick={cancelMic}
+            aria-label="Cancel voice input"
+            title="Cancel voice input"
+            className="ml-auto grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <button onClick={stopMic} className="min-h-9 rounded-md bg-secondary px-3 py-1.5 text-foreground">
+            Done
+          </button>
         </div>
       )}
       <div className="flex items-end gap-0.5">
@@ -192,26 +226,47 @@ export function Composer({
         <button onClick={() => fileRef.current?.click()} aria-label="Add image or photo" className={iconBtn}>
           <Plus className="h-5 w-5" />
         </button>
-        <textarea
-          ref={taRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onFocus={() => setTimeout(() => taRef.current?.scrollIntoView({ block: "nearest" }), 300)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(pointer: fine)").matches) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          rows={1}
-          placeholder={placeholder}
-          aria-label="Message"
-          className="min-w-0 flex-1 resize-none bg-transparent px-1 py-[11px] text-[16px] leading-[22px] outline-none placeholder:text-muted-foreground"
-        />
+        <div className="relative min-w-0 flex-1">
+          {listening && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-10 overflow-hidden whitespace-pre-wrap break-words px-1 py-[11px] text-[16px] leading-[22px]"
+            >
+              <span className="text-foreground">{text}</span>
+              {interimText && (
+                <span className="font-normal italic text-muted-foreground">
+                  {text && !/\s$/.test(text) ? " " : ""}
+                  {interimText}
+                </span>
+              )}
+            </div>
+          )}
+          <textarea
+            ref={taRef}
+            value={displayText}
+            onChange={(e) => setText(e.target.value)}
+            onFocus={() => setTimeout(() => taRef.current?.scrollIntoView({ block: "nearest" }), 300)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(pointer: fine)").matches) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            rows={1}
+            placeholder={placeholder}
+            aria-label="Message"
+            readOnly={listening}
+            className={cn(
+              "min-w-0 w-full resize-none bg-transparent px-1 py-[11px] text-[16px] leading-[22px] outline-none placeholder:text-muted-foreground",
+              listening && "text-transparent caret-transparent",
+            )}
+          />
+        </div>
         <button
           onClick={listening ? stopMic : startMic}
           aria-label={listening ? "Stop dictation" : "Dictate"}
-          className={cn(iconBtn, listening && "bg-accent text-signal")}
+          aria-pressed={listening}
+          className={cn(iconBtn, listening && "bg-accent text-signal ring-1 ring-signal/40")}
         >
           <Mic className="h-5 w-5" />
         </button>

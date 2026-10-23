@@ -1,3 +1,13 @@
+export type SpeechResult = {
+  isFinal: boolean;
+  0: { transcript: string };
+};
+
+export type SpeechResultEvent = {
+  resultIndex: number;
+  results: ArrayLike<SpeechResult>;
+};
+
 export type SR = {
   lang: string;
   continuous: boolean;
@@ -5,10 +15,46 @@ export type SR = {
   start(): void;
   stop(): void;
   abort(): void;
-  onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onresult: ((e: SpeechResultEvent) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
 };
+
+export function splitRecognitionResults(results: ArrayLike<SpeechResult>) {
+  const finalParts: string[] = [];
+  const interimParts: string[] = [];
+
+  for (let i = 0; i < results.length; i += 1) {
+    const result = results[i];
+    if (!result) continue;
+    const transcript = result[0]?.transcript.trim();
+    if (!transcript) continue;
+    (result.isFinal ? finalParts : interimParts).push(transcript);
+  }
+
+  return {
+    finalText: finalParts.join(" "),
+    interimText: interimParts.join(" "),
+  };
+}
+
+export function createVoiceDraft(base: string, results: ArrayLike<SpeechResult>) {
+  const { finalText, interimText } = splitRecognitionResults(results);
+  return {
+    text: appendVoiceText(base, finalText),
+    interimText,
+  };
+}
+
+export function appendVoiceText(base: string, spoken: string) {
+  const phrase = spoken.trim();
+  if (!phrase) return base;
+  return `${base}${base && !/\s$/.test(base) ? " " : ""}${phrase}`;
+}
+
+export function finalizeVoiceDraft(base: string, draft: string, interim: string, cancelled: boolean) {
+  return cancelled ? base : appendVoiceText(draft, interim);
+}
 
 export function getRecognition(): (new () => SR) | null {
   if (typeof window === "undefined") return null;
